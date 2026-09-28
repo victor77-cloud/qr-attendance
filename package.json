@@ -1,0 +1,12 @@
+{
+  "name": "offline-qr-attendance-pwa",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Purely offline QR attendance PWA. Fully client-side: no server of any kind; QR scan-to-transfer is the sole device-to-device channel.",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test"
+  },
+  "license": "MIT"
+}

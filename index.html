@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#0f172a" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <title>Offline QR Attendance</title>
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" type="image/png" href="icons/icon-192.png" />
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <h1>Offline QR Attendance</h1>
+        <p class="sub">No server · QR scan-to-transfer only</p>
+      </div>
+      <div class="topbar-actions">
+        <span id="role-badge" class="badge">No role selected</span>
+        <button id="btn-reset" class="ghost" type="button">Reset data</button>
+      </div>
+    </header>
+
+    <main>
+      <!-- Home / role selection -->
+      <section id="view-home" class="card">
+        <h2>Choose your device role</h2>
+        <p>
+          Two identical, peer instances exchange attendance by QR scan. Pick the role this device
+          plays in the classroom.
+        </p>
+        <div class="row">
+          <button id="btn-role-lecturer" type="button">I am the Lecturer</button>
+          <button id="btn-role-captain" type="button">I am the Class Captain</button>
+        </div>
+        <p id="home-status" class="muted"></p>
+      </section>
+
+      <!-- Setup: roster + pairing -->
+      <section id="view-setup" class="card hidden">
+        <h2>Provisioning</h2>
+        <div class="grid">
+          <div class="card-inner">
+            <h3>1 · Roster</h3>
+            <p class="muted">Import the class list once. Format: <code>id,name</code> per line (or CSV).</p>
+            <input id="roster-file" type="file" accept=".txt,.csv,.json" />
+            <button id="btn-import-roster" type="button">Import roster</button>
+            <p id="roster-count" class="muted"></p>
+          </div>
+          <div class="card-inner">
+            <h3>2 · Pair shared key</h3>
+            <p id="pairing-hint" class="muted"></p>
+            <div id="pairing-lecturer" class="hidden">
+              <button id="btn-gen-key" type="button">Generate &amp; display pairing QR</button>
+            </div>
+            <div id="pairing-captain" class="hidden">
+              <button id="btn-scan-pairing" type="button">Scan lecturer's pairing QR</button>
+              <p class="muted">Or paste the base64 key:
+                <input id="key-paste" type="text" placeholder="paste shared key" />
+                <button id="btn-key-paste" type="button">Save</button>
+              </p>
+            </div>
+            <div id="pairing-qr" class="hidden center">
+              <canvas id="pairing-canvas"></canvas>
+              <p class="muted">Single-use, out-of-band. Keep it in the physical presence of the recipient.</p>
+            </div>
+            <p id="pairing-status" class="muted"></p>
+          </div>
+        </div>
+        <div class="row">
+          <button id="btn-goto-workspace" class="primary" type="button">Continue to workspace</button>
+        </div>
+      </section>
+
+      <!-- Captain workspace -->
+      <section id="view-captain" class="card hidden">
+        <h2>Captain workspace</h2>
+        <div class="grid">
+          <div class="card-inner">
+            <h3>Session</h3>
+            <button id="btn-new-session" type="button">Create session</button>
+            <p id="session-info" class="muted"></p>
+            <div id="session-code-container" class="hidden totp-box">
+              <span class="totp-label">Session code (TOTP)</span>
+              <span id="session-totp-val" class="totp-value">------</span>
+            </div>
+            <h3>Mark present</h3>
+            <div id="roster-list" class="list"></div>
+          </div>
+          <div class="card-inner">
+            <h3>Aggregate QR</h3>
+            <p class="muted">Renders a signed payload of all present students for the lecturer to scan.</p>
+            <button id="btn-render-aggregate" type="button">Render aggregate QR</button>
+            <div id="aggregate-qr" class="hidden center">
+              <canvas id="aggregate-canvas"></canvas>
+              <p id="aggregate-meta" class="muted"></p>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <button id="btn-captain-audit" class="ghost" type="button">Audit log</button>
+          <button id="btn-captain-back" class="ghost" type="button">Back to provisioning</button>
+        </div>
+      </section>
+
+      <!-- Lecturer workspace -->
+      <section id="view-lecturer" class="card hidden">
+        <h2>Lecturer workspace</h2>
+        <div class="grid">
+          <div class="card-inner">
+            <h3>Scan</h3>
+            <button id="btn-start-scan" type="button">Start camera scan</button>
+            <button id="btn-stop-scan" type="button" class="ghost hidden">Stop</button>
+            <video id="scanner-video" autoplay playsinline muted class="scanner hidden"></video>
+            <canvas id="scanner-frame" class="hidden"></canvas>
+            <p id="scan-status" class="muted"></p>
+            <div class="divider"></div>
+            <h3>Manual verification</h3>
+            <p class="muted">Enter a session or student check-in code:</p>
+            <div class="code-entry">
+              <input id="verify-code-input" class="code-input" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="6-digit" maxlength="6" />
+              <button id="btn-verify-code" type="button">Verify</button>
+            </div>
+            <p id="manual-verify-status" class="muted"></p>
+          </div>
+          <div class="card-inner">
+            <h3>Latest result</h3>
+            <div id="result-panel" class="result">
+              <p class="muted">Nothing scanned yet.</p>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <button id="btn-lecturer-audit" class="ghost" type="button">Audit log</button>
+          <button id="btn-lecturer-back" class="ghost" type="button">Back to provisioning</button>
+        </div>
+      </section>
+
+      <!-- Shared audit log -->
+      <section id="view-audit" class="card hidden">
+        <h2>Audit log</h2>
+        <p class="muted">Hash-chained, tamper-evident record of every mutation and verification attempt.</p>
+        <div class="row">
+          <button id="btn-refresh-audit" type="button">Refresh</button>
+          <button id="btn-integrity" type="button">Run integrity scan</button>
+          <button id="btn-goto-home" class="ghost" type="button">Back to role select</button>
+        </div>
+        <p id="integrity-status" class="muted"></p>
+        <div class="tablewrap">
+          <table id="audit-table" class="table">
+            <thead>
+              <tr><th>Seq</th><th>Event</th><th>Time</th><th>Details</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <script src="vendor/qrcode-generator.js"></script>
+    <script src="vendor/jsqr.js"></script>
+    <script type="module" src="js/app.js"></script>
+  </body>
+</html>
