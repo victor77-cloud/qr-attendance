@@ -114,6 +114,9 @@ async function onPasteKey() {
 
 async function onScanPairing() {
   state.scanMode = 'pairing';
+  // Show the camera preview inside the pairing panel (the scanner video
+  // normally lives in the hidden lecturer view, so the captain couldn't aim).
+  $('pairing-captain').appendChild($('scanner-video'));
   startCamera((text) => savePairingKey(text));
 }
 
@@ -226,6 +229,8 @@ async function onRenderAggregate() {
 /* ---- Lecturer: scan + verify + commit ------------------------------------- */
 
 async function enterLecturer() {
+  // Put the scanner preview back in the lecturer's Scan panel.
+  $('scan-status').before($('scanner-video'));
   $('result-panel').innerHTML = '<p class="muted">Nothing scanned yet.</p>';
   $('scan-status').textContent = 'Press “Start camera scan” and point at the captain\u2019s aggregate QR.';
   $('scanner-video').classList.add('hidden');
