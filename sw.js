@@ -3,22 +3,22 @@
  * The network is treated as permanently unavailable: nothing in the app
  * consults a server. Cache is versioned; updates require re-provisioning.
  */
-const CACHE = 'qr-attendance-v4';
+const CACHE = 'qr-attendance-v5';
 const ASSETS = [
   './',
   './index.html',
   './manifest.webmanifest',
-  './css/styles.css',
-  './vendor/qrcode-generator.js',
-  './vendor/jsqr.js',
-  './js/db.js',
-  './js/crypto.js',
-  './js/codec.js',
-  './js/qr.js',
-  './js/app.js',
-  './icons/icon-192.png',
-  './icons/icon-512.png',
-  './icons/apple-touch-icon.png'
+  './styles.css',
+  './qrcode-generator.js',
+  './jsqr.js',
+  './db.js',
+  './crypto.js',
+  './codec.js',
+  './qr.js',
+  './app.js',
+  './icon-192.png',
+  './icon-512.png',
+  './apple-touch-icon.png'
 ];
 
 self.addEventListener('install', (event) => {
