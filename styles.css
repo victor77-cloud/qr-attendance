@@ -263,7 +263,8 @@ canvas { display: block; max-width: 100%; height: auto; margin: 0 auto; }
   margin: 0.5rem auto;
 }
 #pairing-canvas, #aggregate-canvas {
-  width: min(76vw, 300px);
+  width: min(86vw, 360px);
+  image-rendering: pixelated;
 }
 
 /* ---- Audit table (scrollable on phones) ------------------------------------ */
